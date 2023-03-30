@@ -77,9 +77,9 @@ const data = {
       endY: 3,
     },
     {
-      startX: 0,
+      startX: 1,
       startY: 2,
-      endX: 1,
+      endX: 0,
       endY: 2,
     },
     {
@@ -113,6 +113,7 @@ const settings = {
   rectangleBorderColor: "gray",
   textColor: "white",
   linkColor: "gray",
+  arrowSize: 5
 };
 
 function drawChart(settings, data) {
@@ -124,6 +125,30 @@ function drawChart(settings, data) {
     .attr("width", settings.width)
     .attr("height", settings.height);
 
+   // arrow heads
+  svg
+    .append("defs")
+    .append("marker")
+    .attr("id", "arrowhead")
+    .attr(
+      "viewBox",
+      `0 -${settings.arrowSize} ${settings.arrowSize * 2} ${
+        settings.arrowSize * 2
+      }`
+    )
+    .attr("refX", `${settings.arrowSize * 2 - 2}`)
+    .attr("markerWidth", `${settings.arrowSize + 1}`)
+    .attr("markerHeight", `${settings.arrowSize + 1}`)
+    .attr("orient", "auto")
+    .append("path")
+    .attr(
+      "d",
+      `M0,-${settings.arrowSize}L${settings.arrowSize * 2},0L0,${
+        settings.arrowSize
+      }`
+    )
+    .style("fill", settings.linkColor);
+
   const mainGroup = svg
     .append("g")
     .attr("class", "main-group")
@@ -132,17 +157,65 @@ function drawChart(settings, data) {
       `translate(${settings.margin.left}, ${settings.margin.top})`
     );
 
+  function correctionStartX(d){
+    if(d.startX === d.endX){
+      return 0;
+    }
+    if(d.startX < d.endX){
+      return settings.nodeWidth / 2;
+    }
+    if(d.startX > d.endX){
+      return -1 * settings.nodeWidth /2;
+    }
+  }
+  function correctionEndX(d){
+    if(d.startX === d.endX){
+      return 0;
+    }
+    if(d.startX > d.endX){
+      return settings.nodeWidth / 2 + 1;
+    }
+    if(d.startX < d.endX){
+      return -1 * (settings.nodeWidth /2 + 1);
+    }
+  }
+
+
+  function correctionStartY(d){
+    if(d.startY === d.endY){
+      return 0;
+    }
+    if(d.startY < d.endY){
+      return settings.nodeHeight / 2;
+    }
+    if(d.startY > d.endY){
+      return -1 * settings.nodeHeight /2;
+    }
+  }
+  function correctionEndY(d){
+    if(d.startY === d.endY){
+      return 0;
+    }
+    if(d.startY > d.endY){
+      return settings.nodeHeight / 2 + 1;
+    }
+    if(d.startY < d.endY){
+      return -1 * (settings.nodeHeight /2 + 1);
+    }
+  }
+
   const links = mainGroup
     .selectAll("line")
     .data(data.links)
     .enter()
     .append("line")
     .attr("class", "link")
-    .attr("x1", (d) => d.startX * settings.distanceHorizontal)
-    .attr("x2", (d) => d.endX * settings.distanceHorizontal)
-    .attr("y1", (d) => d.startY * settings.distanceVertical)
-    .attr("y2", (d) => d.endY * settings.distanceVertical)
-    .style("stroke", settings.linkColor);
+    .attr("x1", (d) => d.startX * settings.distanceHorizontal + correctionStartX(d))
+    .attr("x2", (d) => d.endX * settings.distanceHorizontal + correctionEndX(d))
+    .attr("y1", (d) => d.startY * settings.distanceVertical + correctionStartY(d))
+    .attr("y2", (d) => d.endY * settings.distanceVertical + correctionEndY(d))
+    .style("stroke", settings.linkColor)
+      .attr("marker-end", "url(#arrowhead)");
 
   const nodes = mainGroup
     .selectAll("a")
@@ -159,6 +232,7 @@ function drawChart(settings, data) {
           d.positionX * settings.distanceHorizontal - settings.nodeWidth / 2
         },${d.positionY * settings.distanceVertical - settings.nodeHeight / 2})`
     )
+
     .on("mouseover", function () {
       d3.select(this).select("rect").style("fill", settings.hoverColor);
     })
