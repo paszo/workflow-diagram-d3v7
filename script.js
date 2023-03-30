@@ -122,8 +122,8 @@ function drawChart(settings, data) {
   const svg = d3
     .select(`#${settings.parentId}`)
     .append("svg")
-    .attr("width", settings.width)
-    .attr("height", settings.height);
+    .attr("width", "100%")
+    .attr("viewBox", `0 0 ${settings.width} ${settings.height}`)
 
    // arrow heads
   svg
